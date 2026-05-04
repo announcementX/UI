@@ -2,7 +2,7 @@ local UIS = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
 
--- 清理旧 UI
+-- 彻底清理
 if CoreGui:FindFirstChild("XU_Framework") then CoreGui.XU_Framework:Destroy() end
 
 local ScreenGui = Instance.new("ScreenGui")
@@ -11,40 +11,45 @@ ScreenGui.Parent = CoreGui
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 local XU_Lib = {}
+local UIConfig = {
+    MainColor = Color3.fromRGB(5, 5, 7),
+    AccentColor = Color3.fromRGB(160, 60, 255), -- 还原原始紫
+    SecondaryColor = Color3.fromRGB(15, 15, 20),
+    Font = Enum.Font.GothamBold
+}
 
--- 初始化主窗口
 function XU_Lib:Init()
-    -- 1. 主框架
+    -- 1. 主框架 (硬核深色)
     local Main = Instance.new("Frame")
-    Main.Name = "XU_Main"
+    Main.Name = "Main"
     Main.Size = UDim2.new(0, 540, 0, 360)
     Main.Position = UDim2.new(0.5, -270, 0.5, -180)
-    Main.BackgroundColor3 = Color3.fromRGB(8, 8, 10)
+    Main.BackgroundColor3 = UIConfig.MainColor
     Main.BorderSizePixel = 0
     Main.Parent = ScreenGui
     Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 6)
 
-    -- 🔥 核心流光边框 (Rainbow Stroke)
-    local XU_Stroke = Instance.new("UIStroke", Main)
-    XU_Stroke.Thickness = 2.5
-    XU_Stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    -- 🔥 还原流光灯带 (逻辑增强：永不闪烁)
+    local MainStroke = Instance.new("UIStroke", Main)
+    MainStroke.Thickness = 2.5
+    MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     
-    local XU_Gradient = Instance.new("UIGradient", XU_Stroke)
-    XU_Gradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 170, 255)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(20, 20, 40)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 170, 255))
+    local MainGradient = Instance.new("UIGradient", MainStroke)
+    MainGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, UIConfig.AccentColor),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(30, 10, 60)),
+        ColorSequenceKeypoint.new(1, UIConfig.AccentColor)
     })
 
     task.spawn(function()
         while true do
-            TweenService:Create(XU_Gradient, TweenInfo.new(2, Enum.EasingStyle.Linear), {Rotation = 360}):Play()
-            task.wait(2)
-            XU_Gradient.Rotation = 0
+            TweenService:Create(MainGradient, TweenInfo.new(1.5, Enum.EasingStyle.Linear), {Rotation = 360}):Play()
+            task.wait(1.5)
+            MainGradient.Rotation = 0
         end
     end)
 
-    -- 2. 布局系统
+    -- 2. 顶部标题栏
     local TopBar = Instance.new("Frame", Main)
     TopBar.Size = UDim2.new(1, 0, 0, 45)
     TopBar.BackgroundTransparency = 1
@@ -52,236 +57,199 @@ function XU_Lib:Init()
     local Title = Instance.new("TextLabel", TopBar)
     Title.Size = UDim2.new(0, 200, 1, 0)
     Title.Position = UDim2.new(0, 18, 0, 0)
-    Title.Text = "XU FRAMEWORK"
-    Title.TextColor3 = Color3.fromRGB(0, 170, 255)
-    Title.Font = Enum.Font.GothamBold
+    Title.Text = "XU PREMIUM"
+    Title.TextColor3 = UIConfig.AccentColor
+    Title.Font = UIConfig.Font
     Title.TextSize = 18
     Title.BackgroundTransparency = 1
     Title.TextXAlignment = Enum.TextXAlignment.Left
 
+    -- 3. 栏目与容器
     local Sidebar = Instance.new("Frame", Main)
     Sidebar.Size = UDim2.new(0, 130, 1, -70)
     Sidebar.Position = UDim2.new(0, 12, 0, 55)
     Sidebar.BackgroundTransparency = 1
-    Instance.new("UIListLayout", Sidebar).Padding = UDim.new(0, 8)
+    local SideLayout = Instance.new("UIListLayout", Sidebar)
+    SideLayout.Padding = UDim.new(0, 8)
+    SideLayout.SortOrder = Enum.SortOrder.LayoutOrder -- 强制排序
 
     local Container = Instance.new("Frame", Main)
     Container.Size = UDim2.new(1, -165, 1, -70)
     Container.Position = UDim2.new(0, 150, 0, 55)
     Container.BackgroundTransparency = 1
 
-    -- 3. 悬浮窗 (高度缩小)
-    local FloatBtn = Instance.new("ImageButton", ScreenGui)
-    FloatBtn.Name = "XU_Float"
-    FloatBtn.Size = UDim2.new(0, 45, 0, 32) -- 扁平化设计
-    FloatBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-    FloatBtn.Visible = false
-    FloatBtn.ZIndex = 200
-    Instance.new("UICorner", FloatBtn).CornerRadius = UDim.new(0, 6)
-    local FloatStroke = Instance.new("UIStroke", FloatBtn)
-    FloatStroke.Color = Color3.fromRGB(0, 170, 255)
+    -- 4. 悬浮窗 (缩小高度版)
+    local FloatIcon = Instance.new("ImageButton", ScreenGui)
+    FloatIcon.Size = UDim2.new(0, 45, 0, 32)
+    FloatIcon.BackgroundColor3 = UIConfig.SecondaryColor
+    FloatIcon.Visible = false
+    FloatIcon.ZIndex = 200
+    Instance.new("UICorner", FloatIcon).CornerRadius = UDim.new(0, 6)
+    local FloatStroke = Instance.new("UIStroke", FloatIcon)
+    FloatStroke.Color = UIConfig.AccentColor
     FloatStroke.Thickness = 2
 
-    -- 4. 窗口控制
-    local function CreateControl(txt, pos, callback)
-        local btn = Instance.new("TextButton", TopBar)
-        btn.Size = UDim2.new(0, 35, 0, 35)
-        btn.Position = pos
-        btn.BackgroundTransparency = 1
-        btn.Text = txt
-        btn.TextColor3 = Color3.new(1,1,1)
-        btn.TextSize = 24
-        btn.MouseButton1Click:Connect(callback)
-        return btn
-    end
-
-    CreateControl("×", UDim2.new(1, -45, 0, 5), function() ScreenGui:Destroy() end)
-    CreateControl("-", UDim2.new(1, -85, 0, 5), function()
-        Main.Visible = false
-        FloatBtn.Position = UDim2.new(0, Main.AbsolutePosition.X + 250, 0, Main.AbsolutePosition.Y)
-        FloatBtn.Visible = true
-    end)
-
-    FloatBtn.MouseButton1Click:Connect(function()
-        Main.Visible = true
-        FloatBtn.Visible = false
-    end)
-
-    -- 通用防误触
-    self.SafeClick = function(func)
-        local debounce = false
+    -- 点击反馈与防误触
+    self.SafeExec = function(func)
+        local db = false
         return function(...)
-            if not debounce then
-                debounce = true
-                func(...)
-                task.wait(0.3)
-                debounce = false
-            end
+            if db then return end
+            db = true
+            -- 点击爆发特效
+            MainStroke.Thickness = 5
+            TweenService:Create(MainStroke, TweenInfo.new(0.4), {Thickness = 2.5}):Play()
+            func(...)
+            task.wait(0.3)
+            db = false
         end
     end
+
+    -- 按钮控制逻辑
+    local function CreateCtrl(txt, pos, cb)
+        local b = Instance.new("TextButton", TopBar)
+        b.Size = UDim2.new(0, 35, 0, 35); b.Position = pos; b.BackgroundTransparency = 1
+        b.Text = txt; b.TextColor3 = Color3.new(1,1,1); b.TextSize = 26; b.Font = UIConfig.Font
+        b.MouseButton1Click:Connect(cb)
+    end
+
+    CreateCtrl("×", UDim2.new(1, -45, 0, 5), function() ScreenGui:Destroy() end)
+    CreateCtrl("-", UDim2.new(1, -85, 0, 5), function()
+        Main.Visible = false
+        FloatIcon.Position = UDim2.new(0, Main.AbsolutePosition.X + 250, 0, Main.AbsolutePosition.Y)
+        FloatIcon.Visible = true
+    end)
+    FloatIcon.MouseButton1Click:Connect(function() Main.Visible = true; FloatIcon.Visible = false end)
 
     self.Main = Main
     self.Container = Container
     self.Sidebar = Sidebar
+    self.CurrentOrder = 0 -- 排序计数器
     return self
 end
 
--- [栏目管理]
 function XU_Lib:AddTab(name, isHome)
     local Page = Instance.new("ScrollingFrame", self.Container)
-    Page.Size = UDim2.new(1, 0, 1, 0)
-    Page.BackgroundTransparency = 1
-    Page.Visible = isHome or false
-    Page.ScrollBarThickness = 0
-    Page.CanvasSize = UDim2.new(0,0,0,0)
+    Page.Size = UDim2.new(1, 0, 1, 0); Page.BackgroundTransparency = 1; Page.Visible = isHome or false
+    Page.ScrollBarThickness = 0; Page.CanvasSize = UDim2.new(0,0,0,0)
     
     local Layout = Instance.new("UIListLayout", Page)
-    Layout.Padding = UDim.new(0, 6)
+    Layout.Padding = UDim.new(0, 8); Layout.SortOrder = Enum.SortOrder.LayoutOrder
     Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        Page.CanvasSize = UDim2.new(0,0,0, Layout.AbsoluteContentSize.Y + 10)
+        Page.CanvasSize = UDim2.new(0,0,0, Layout.AbsoluteContentSize.Y + 15)
     end)
 
     local TabBtn = Instance.new("TextButton", self.Sidebar)
-    TabBtn.Size = UDim2.new(1, 0, 0, 40)
-    TabBtn.BackgroundColor3 = isHome and Color3.fromRGB(30, 30, 50) or Color3.fromRGB(15, 15, 20)
-    TabBtn.Text = name
-    TabBtn.TextColor3 = Color3.new(0.9,0.9,0.9)
-    TabBtn.Font = Enum.Font.GothamBold
-    TabBtn.TextSize = 13
+    TabBtn.Size = UDim2.new(1, 0, 0, 42); TabBtn.BackgroundColor3 = isHome and Color3.fromRGB(40, 20, 80) or UIConfig.SecondaryColor
+    TabBtn.Text = name; TabBtn.TextColor3 = Color3.new(0.9,0.9,0.9); TabBtn.Font = UIConfig.Font; TabBtn.TextSize = 14
     Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 4)
 
     TabBtn.MouseButton1Click:Connect(function()
         for _, v in pairs(self.Container:GetChildren()) do v.Visible = false end
-        for _, v in pairs(self.Sidebar:GetChildren()) do 
-            if v:IsA("TextButton") then v.BackgroundColor3 = Color3.fromRGB(15, 15, 20) end 
-        end
-        Page.Visible = true
-        TabBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
+        for _, v in pairs(self.Sidebar:GetChildren()) do if v:IsA("TextButton") then v.BackgroundColor3 = UIConfig.SecondaryColor end end
+        Page.Visible = true; TabBtn.BackgroundColor3 = Color3.fromRGB(40, 20, 80)
     end)
     return Page
 end
 
--- [1] XU 巨大按钮
-function XU_Lib:AddBigButton(parent, text, img, callback)
+-- [1] 巨大按钮 (强制排序)
+function XU_Lib:AddBigButton(parent, text, imgId, callback)
+    self.CurrentOrder = self.CurrentOrder + 1
     local Btn = Instance.new("TextButton", parent)
-    Btn.Size = UDim2.new(1, -5, 0, 90)
-    Btn.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-    Btn.Text = text
-    Btn.TextColor3 = Color3.new(1,1,1)
-    Btn.Font = Enum.Font.GothamBold
-    Btn.TextSize = 20
-    Btn.TextXAlignment = Enum.TextXAlignment.Right
-    Instance.new("UICorner", Btn)
-    Instance.new("UIPadding", Btn).PaddingRight = UDim.new(0, 20)
+    Btn.LayoutOrder = self.CurrentOrder
+    Btn.Size = UDim2.new(1, -5, 0, 90); Btn.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+    Btn.Text = text; Btn.TextColor3 = Color3.new(1,1,1); Btn.Font = UIConfig.Font; Btn.TextSize = 22; Btn.TextXAlignment = Enum.TextXAlignment.Right
+    Instance.new("UICorner", Btn); Instance.new("UIPadding", Btn).PaddingRight = UDim.new(0, 30)
 
-    if img and img ~= "" then
-        local I = Instance.new("ImageLabel", Btn)
-        I.Size = UDim2.new(0, 70, 0, 70)
-        I.Position = UDim2.new(0, 10, 0.5, -35)
-        I.Image = img
-        I.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-        Instance.new("UICorner", I)
+    if imgId and imgId ~= "" then
+        local Icon = Instance.new("ImageLabel", Btn)
+        Icon.Size = UDim2.new(0, 80, 0, 80); Icon.Position = UDim2.new(0, 10, 0.5, -40); Icon.Image = imgId
+        Icon.BackgroundColor3 = Color3.fromRGB(35, 35, 45); Instance.new("UICorner", Icon)
     end
-    Btn.MouseButton1Click:Connect(self.SafeClick(callback))
+    Btn.MouseButton1Click:Connect(self.SafeExec(callback))
 end
 
--- [2] XU 网格按钮 (自动适配1-3列)
+-- [2] 网格多按钮 (自动缩放)
 function XU_Lib:AddButtonRow(parent, buttons)
+    self.CurrentOrder = self.CurrentOrder + 1
     local Row = Instance.new("Frame", parent)
-    Row.Size = UDim2.new(1, -5, 0, 35)
-    Row.BackgroundTransparency = 1
-    local Layout = Instance.new("UIListLayout", Row)
-    Layout.FillDirection = Enum.FillDirection.Horizontal
-    Layout.Padding = UDim.new(0, 5)
+    Row.LayoutOrder = self.CurrentOrder
+    Row.Size = UDim2.new(1, -5, 0, 38); Row.BackgroundTransparency = 1
+    local L = Instance.new("UIListLayout", Row); L.FillDirection = Enum.FillDirection.Horizontal; L.Padding = UDim.new(0, 6)
 
     for _, info in pairs(buttons) do
         local B = Instance.new("TextButton", Row)
-        B.Size = UDim2.new(1/#buttons, -(((#buttons-1)*5)/#buttons), 1, 0)
-        B.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
-        B.Text = info.Text
-        B.TextColor3 = Color3.new(0.9,0.9,0.9)
-        B.Font = Enum.Font.Gotham
-        B.TextSize = 12
-        Instance.new("UICorner", B).CornerRadius = UDim.new(0, 4)
-        B.MouseButton1Click:Connect(self.SafeClick(info.Callback))
+        B.Size = UDim2.new(1/#buttons, -(((#buttons-1)*6)/#buttons), 1, 0)
+        B.BackgroundColor3 = UIConfig.SecondaryColor; B.Text = info.Text; B.TextColor3 = Color3.new(0.9,0.9,0.9)
+        B.Font = UIConfig.Font; B.TextSize = 13; Instance.new("UICorner", B).CornerRadius = UDim.new(0, 4)
+        B.MouseButton1Click:Connect(self.SafeExec(info.Callback))
     end
 end
 
--- [3] XU 文件夹 (深度嵌套支持)
+-- [3] 文件夹系统
 function XU_Lib:AddFolder(parent, name)
+    self.CurrentOrder = self.CurrentOrder + 1
     local F = Instance.new("Frame", parent)
-    F.Size = UDim2.new(1, -5, 0, 35)
-    F.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
-    F.ClipsDescendants = true
+    F.LayoutOrder = self.CurrentOrder
+    F.Size = UDim2.new(1, -5, 0, 35); F.BackgroundColor3 = Color3.fromRGB(12, 12, 18); F.ClipsDescendants = true
     Instance.new("UICorner", F)
     
     local T = Instance.new("TextButton", F)
-    T.Size = UDim2.new(1, 0, 0, 35)
-    T.BackgroundTransparency = 1
-    T.Text = "  [+] " .. name
-    T.TextColor3 = Color3.fromRGB(0, 170, 255)
-    T.TextXAlignment = Enum.TextXAlignment.Left
-    T.Font = Enum.Font.GothamBold
+    T.Size = UDim2.new(1, 0, 0, 35); T.BackgroundTransparency = 1; T.Text = "  📁 " .. name
+    T.TextColor3 = UIConfig.AccentColor; T.Font = UIConfig.Font; T.TextXAlignment = Enum.TextXAlignment.Left
 
     local Content = Instance.new("Frame", F)
-    Content.Position = UDim2.new(0, 5, 0, 40)
-    Content.Size = UDim2.new(1, -10, 0, 0)
-    Content.BackgroundTransparency = 1
-    local L = Instance.new("UIListLayout", Content); L.Padding = UDim.new(0, 5)
+    Content.Position = UDim2.new(0, 5, 0, 40); Content.Size = UDim2.new(1, -10, 0, 0); Content.BackgroundTransparency = 1
+    local L = Instance.new("UIListLayout", Content); L.Padding = UDim.new(0, 6); L.SortOrder = Enum.SortOrder.LayoutOrder
 
     local open = false
     T.MouseButton1Click:Connect(function()
         open = not open
-        T.Text = open and "  [-] " .. name or "  [+] " .. name
         TweenService:Create(F, TweenInfo.new(0.3), {Size = UDim2.new(1, -5, 0, open and (L.AbsoluteContentSize.Y + 45) or 35)}):Play()
     end)
     return Content
 end
 
--- [4] XU 开关 (全域触发)
+-- [4] 开关 (全域触发)
 function XU_Lib:AddToggle(parent, text, callback)
+    self.CurrentOrder = self.CurrentOrder + 1
     local B = Instance.new("TextButton", parent)
-    B.Size = UDim2.new(1, -5, 0, 35)
-    B.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
-    B.Text = "  " .. text
-    B.TextColor3 = Color3.new(0.9,0.9,0.9)
-    B.TextXAlignment = Enum.TextXAlignment.Left
-    Instance.new("UICorner", B)
+    B.LayoutOrder = self.CurrentOrder
+    B.Size = UDim2.new(1, -5, 0, 35); B.BackgroundColor3 = UIConfig.SecondaryColor
+    B.Text = "  " .. text; B.TextColor3 = Color3.new(0.9,0.9,0.9); B.Font = UIConfig.Font
+    B.TextXAlignment = Enum.TextXAlignment.Left; Instance.new("UICorner", B)
 
-    local Switch = Instance.new("Frame", B)
-    Switch.Size = UDim2.new(0, 35, 0, 18)
-    Switch.Position = UDim2.new(1, -45, 0.5, -9)
-    Switch.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
-    Instance.new("UICorner", Switch).CornerRadius = UDim.new(1, 0)
+    local Sw = Instance.new("Frame", B)
+    Sw.Size = UDim2.new(0, 35, 0, 18); Sw.Position = UDim2.new(1, -45, 0.5, -9); Sw.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+    Instance.new("UICorner", Sw).CornerRadius = UDim.new(1, 0)
 
-    local Dot = Instance.new("Frame", Switch)
-    Dot.Size = UDim2.new(0, 14, 0, 14); Dot.Position = UDim2.new(0, 2, 0.5, -7)
-    Dot.BackgroundColor3 = Color3.new(1, 1, 1)
-    Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
+    local D = Instance.new("Frame", Sw)
+    D.Size = UDim2.new(0, 14, 0, 14); D.Position = UDim2.new(0, 2, 0.5, -7); D.BackgroundColor3 = Color3.new(1,1,1); Instance.new("UICorner", D)
 
-    local state = false
-    B.MouseButton1Click:Connect(self.SafeClick(function()
-        state = not state
-        TweenService:Create(Dot, TweenInfo.new(0.2), {Position = state and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)}):Play()
-        TweenService:Create(Switch, TweenInfo.new(0.2), {BackgroundColor3 = state and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(50, 50, 60)}):Play()
-        callback(state)
+    local s = false
+    B.MouseButton1Click:Connect(self.SafeExec(function()
+        s = not s
+        TweenService:Create(D, TweenInfo.new(0.2), {Position = s and UDim2.new(1,-16,0.5,-7) or UDim2.new(0,2,0.5,-7)}):Play()
+        TweenService:Create(Sw, TweenInfo.new(0.2), {BackgroundColor3 = s and UIConfig.AccentColor or Color3.fromRGB(45, 45, 55)}):Play()
+        callback(s)
     end))
 end
 
--- [5] XU 列表选择执行
+-- [5] 列表触发器
 function XU_Lib:AddDropdown(parent, text, list, callback)
+    self.CurrentOrder = self.CurrentOrder + 1
     local D = Instance.new("Frame", parent)
-    D.Size = UDim2.new(1, -5, 0, 35); D.BackgroundColor3 = Color3.fromRGB(20, 20, 30); D.ClipsDescendants = true
+    D.LayoutOrder = self.CurrentOrder
+    D.Size = UDim2.new(1, -5, 0, 35); D.BackgroundColor3 = UIConfig.SecondaryColor; D.ClipsDescendants = true
     Instance.new("UICorner", D)
 
-    local sel = list[1] or "None"
+    local sel = list[1] or "..."
     local M = Instance.new("TextButton", D)
-    M.Size = UDim2.new(1, 0, 0, 35); M.BackgroundTransparency = 1
-    M.Text = "  " .. text .. " > " .. sel; M.TextColor3 = Color3.new(0.8,0.8,0.8); M.TextXAlignment = Enum.TextXAlignment.Left
+    M.Size = UDim2.new(1, 0, 0, 35); M.BackgroundTransparency = 1; M.Text = "  " .. text .. ": " .. sel
+    M.TextColor3 = Color3.new(0.8,0.8,0.8); M.TextXAlignment = Enum.TextXAlignment.Left; M.Font = UIConfig.Font
     
-    local Run = Instance.new("TextButton", M)
-    Run.Size = UDim2.new(0, 50, 0, 24); Run.Position = UDim2.new(1, -55, 0.5, -12)
-    Run.BackgroundColor3 = Color3.fromRGB(0, 170, 255); Run.Text = "RUN"; Instance.new("UICorner", Run)
+    local Exec = Instance.new("TextButton", M)
+    Exec.Size = UDim2.new(0, 55, 0, 24); Exec.Position = UDim2.new(1, -60, 0.5, -12)
+    Exec.BackgroundColor3 = UIConfig.AccentColor; Exec.Text = "执行"; Instance.new("UICorner", Exec)
 
     local open = false
     M.MouseButton1Click:Connect(function()
@@ -290,28 +258,31 @@ function XU_Lib:AddDropdown(parent, text, list, callback)
     end)
 
     local S = Instance.new("ScrollingFrame", D)
-    S.Position = UDim2.new(0,5,0,35); S.Size = UDim2.new(1,-10,0,100); S.BackgroundTransparency = 1; S.ScrollBarThickness = 2
+    S.Position = UDim2.new(0,5,0,38); S.Size = UDim2.new(1,-10,0,95); S.BackgroundTransparency = 1; S.ScrollBarThickness = 2
+    local L = Instance.new("UIListLayout", S)
 
-    local SL = Instance.new("UIListLayout", S)
     for _, v in pairs(list) do
-        local o = Instance.new("TextButton", S)
-        o.Size = UDim2.new(1,0,0,25); o.BackgroundTransparency = 1; o.Text = v; o.TextColor3 = Color3.new(0.6,0.6,0.6)
-        o.MouseButton1Click:Connect(function()
-            sel = v; M.Text = "  " .. text .. " > " .. sel; open = false
+        local opt = Instance.new("TextButton", S)
+        opt.Size = UDim2.new(1, 0, 0, 25); opt.BackgroundTransparency = 1; opt.Text = v
+        opt.TextColor3 = Color3.new(0.6,0.6,0.6); opt.Font = UIConfig.Font
+        opt.MouseButton1Click:Connect(function()
+            sel = v; M.Text = "  " .. text .. ": " .. sel; open = false
             TweenService:Create(D, TweenInfo.new(0.3), {Size = UDim2.new(1,-5, 0, 35)}):Play()
         end)
     end
-    Run.MouseButton1Click:Connect(self.SafeClick(function() callback(sel) end))
+    Exec.MouseButton1Click:Connect(self.SafeExec(function() callback(sel) end))
 end
 
--- [6] XU 字体标签 (纯文本)
+-- [6] 文本显示
 function XU_Lib:AddLabel(parent, text)
+    self.CurrentOrder = self.CurrentOrder + 1
     local L = Instance.new("TextLabel", parent)
+    L.LayoutOrder = self.CurrentOrder
     L.Size = UDim2.new(1, -5, 0, 30); L.BackgroundTransparency = 1
     L.Text = "  " .. text; L.TextColor3 = Color3.new(0.5,0.5,0.5); L.TextXAlignment = Enum.TextXAlignment.Left; L.Font = Enum.Font.Gotham
 end
 
--- 拖拽支持 (全平台)
+-- 拖拽支持
 local function Drag(obj, target)
     local dragStart, startPos, dragging
     obj.InputBegan:Connect(function(input)
@@ -328,8 +299,8 @@ local function Drag(obj, target)
     UIS.InputEnded:Connect(function() dragging = false end)
 end
 
-function XU_Lib:Finalize()
-    Drag(self.Main:FindFirstChild("Frame", true) or self.Main, self.Main) -- 简单拖拽
+function XU_Lib:Final()
+    Drag(self.Main, self.Main)
     return self
 end
 
