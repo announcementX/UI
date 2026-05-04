@@ -1,108 +1,177 @@
--- // PRIVATE SCRIPT - NO LEAK //
--- // Optimization for Mobile Executor (Delta/Fluxus) //
+local UIS = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+local TweenService = game:GetService("TweenService")
 
-local Lib = {}
+local XU = {}
+XU.__index = XU
 
-function Lib:Init()
-    local UIS = game:GetService("UserInputService")
-    local CG = game:GetService("CoreGui")
-    local TS = game:GetService("TweenService")
+-- 这个是主要配色，你们想改就在这里改呗，反正你们随便改
+local XU_Theme = {
+    Main = Color3.fromRGB(5, 5, 7),
+    Accent = Color3.fromRGB(160, 60, 255),
+    Secondary = Color3.fromRGB(20, 20, 28),
+    Text = Color3.fromRGB(230, 230, 230),
+    Sidebar = Color3.fromRGB(15, 15, 20),
+    ButtonHover = Color3.fromRGB(40, 20, 80)
+}
 
-    if CG:FindFirstChild("TianLi_V13") then CG.TianLi_V13:Destroy() end
-
-    local Screen = Instance.new("ScreenGui", CG)
-    Screen.Name = "TianLi_V13"
-    Screen.IgnoreGuiInset = true -- 手机端必须开这个，防止顶部偏移
-
-    local Main = Instance.new("Frame", Screen)
-    Main.Name = "Main"
-    Main.Size = UDim2.new(0, 540, 0, 360)
-    Main.Position = UDim2.new(0.5, -270, 0.5, -180)
-    Main.BackgroundColor3 = Color3.fromRGB(5, 5, 7)
-    Main.BorderSizePixel = 0
-    Main.ClipsDescendants = false -- 关键点：不能裁剪，否则边框灯带会被切掉
-    Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 6)
-
-    -- [ 核心灯带逻辑 - 强制置顶修复 ]
-    local MainStroke = Instance.new("UIStroke", Main)
-    MainStroke.Name = "GlowBorder"
-    MainStroke.Thickness = 3 -- 稍微加粗一点
-    MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    MainStroke.LineJoinMode = Enum.LineJoinMode.Round
-    MainStroke.Transparency = 0 -- 确保不透明
-    MainStroke.Enabled = true
-
-    local MainGradient = Instance.new("UIGradient", MainStroke)
-    MainGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(160, 60, 255)),
+-- 流光边框特效,这个的话我推荐你们不要改啊，因为这个你们乱改，小心到时候废了
+local function applyGlowEffect(stroke)
+    local gradient = Instance.new("UIGradient", stroke)
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, XU_Theme.Accent),
         ColorSequenceKeypoint.new(0.5, Color3.fromRGB(30, 10, 60)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(160, 60, 255))
+        ColorSequenceKeypoint.new(1, XU_Theme.Accent)
     })
-
-    -- 既然 Tween 不行，直接用循环步进，这个最稳，手机端不会卡动画
+    
     task.spawn(function()
-        local r = 0
-        while task.wait() do
-            r = r + 2
-            if r >= 360 then r = 0 end
-            MainGradient.Rotation = r
+        while stroke.Parent do
+            TweenService:Create(gradient, TweenInfo.new(2, Enum.EasingStyle.Linear), {Rotation = 360}):Play()
+            task.wait(2)
+            gradient.Rotation = 0
         end
     end)
-
-    -- 剩下的 UI 结构保持 V13 原样
-    local Top = Instance.new("Frame", Main)
-    Top.Size = UDim2.new(1, 0, 0, 45); Top.BackgroundTransparency = 1
-    
-    local Content = Instance.new("Frame", Main)
-    Content.Size = UDim2.new(1, -165, 1, -70); Content.Position = UDim2.new(0, 150, 0, 55); Content.BackgroundTransparency = 1
-    
-    local Side = Instance.new("Frame", Main)
-    Side.Size = UDim2.new(0, 130, 1, -70); Side.Position = UDim2.new(0, 12, 0, 55); Side.BackgroundTransparency = 1
-    Instance.new("UIListLayout", Side).Padding = UDim.new(0, 8)
-
-    local API = {}
-    function API:AddTab(name)
-        local P = Instance.new("ScrollingFrame", Content)
-        P.Size = UDim2.new(1, 0, 1, 0); P.Visible = false; P.BackgroundTransparency = 1; P.ScrollBarThickness = 0
-        Instance.new("UIListLayout", P).Padding = UDim.new(0, 8)
-
-        local B = Instance.new("TextButton", Side)
-        B.Size = UDim2.new(1, 0, 0, 42); B.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-        B.Text = name; B.TextColor3 = Color3.fromRGB(230, 230, 230); B.Font = "GothamBold"; B.TextSize = 14
-        Instance.new("UICorner", B).CornerRadius = UDim.new(0, 4)
-
-        B.MouseButton1Click:Connect(function()
-            for _,v in pairs(Content:GetChildren()) do v.Visible = false end
-            P.Visible = true
-        end)
-        
-        local Page = {}
-        function Page:Button(t, cb)
-            local btn = Instance.new("TextButton", P)
-            btn.Size = UDim2.new(0.98, 0, 0, 40); btn.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
-            btn.Text = t; btn.TextColor3 = Color3.fromRGB(220, 220, 220); btn.Font = "Gotham"
-            Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
-            btn.MouseButton1Click:Connect(cb)
-        end
-        return Page
-    end
-
-    -- 简单的拖拽 (去掉啰嗦的封装)
-    local d, sI, sP
-    Top.InputBegan:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.Touch or i.UserInputType == Enum.UserInputType.MouseButton1 then
-            d = true; sI = i.Position; sP = Main.Position
-        end
-    end)
-    UIS.InputChanged:Connect(function(i)
-        if d and (i.UserInputType == Enum.UserInputType.Touch or i.UserInputType == Enum.UserInputType.MouseMovement) then
-            local delta = i.Position - sI
-            Main.Position = UDim2.new(sP.X.Scale, sP.X.Offset + delta.X, sP.Y.Scale, sP.Y.Offset + delta.Y)
-        end
-    end)
-    UIS.InputEnded:Connect(function() d = false end)
-
-    return API
 end
 
-return Lib
+function XU.new(projectName)
+    local self = setmetatable({}, XU)
+    
+    -- 基础容器
+    self.Gui = Instance.new("ScreenGui")
+    self.Gui.Name = "XU_Framework"
+    self.Gui.Parent = CoreGui
+    self.Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+    -- 主框架
+    self.Main = Instance.new("Frame")
+    self.Main.Size = UDim2.new(0, 540, 0, 360)
+    self.Main.Position = UDim2.new(0.5, -270, 0.5, -180)
+    self.Main.BackgroundColor3 = XU_Theme.Main
+    self.Main.Parent = self.Gui
+    Instance.new("UICorner", self.Main).CornerRadius = UDim.new(0, 6)
+
+    -- 流光描边
+    local stroke = Instance.new("UIStroke", self.Main)
+    stroke.Thickness = 2.5
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    applyGlowEffect(stroke)
+    self.MainStroke = stroke
+
+    -- 顶部栏 
+    local topBar = Instance.new("Frame", self.Main)
+    topBar.Size = UDim2.new(1, 0, 0, 45)
+    topBar.BackgroundTransparency = 1
+    self:EnableDrag(topBar, self.Main)
+
+    local title = Instance.new("TextLabel", topBar)
+    title.Size = UDim2.new(0, 200, 1, 0)
+    title.Position = UDim2.new(0, 18, 0, 0)
+    title.Text = projectName or "XU EXCLUSIVE"
+    title.TextColor3 = XU_Theme.Accent
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 18
+    title.BackgroundTransparency = 1
+    title.TextXAlignment = Enum.TextXAlignment.Left
+
+    -- 侧边栏
+    self.Sidebar = Instance.new("Frame", self.Main)
+    self.Sidebar.Size = UDim2.new(0, 130, 1, -70)
+    self.Sidebar.Position = UDim2.new(0, 12, 0, 55)
+    self.Sidebar.BackgroundTransparency = 1
+    Instance.new("UIListLayout", self.Sidebar).Padding = UDim.new(0, 8)
+
+    -- 内容展示区
+    self.Content = Instance.new("Frame", self.Main)
+    self.Content.Size = UDim2.new(1, -165, 1, -70)
+    self.Content.Position = UDim2.new(0, 150, 0, 55)
+    self.Content.BackgroundTransparency = 1
+
+    -- 关闭按钮
+    local close = Instance.new("TextButton", topBar)
+    close.Size = UDim2.new(0, 35, 0, 35)
+    close.Position = UDim2.new(1, -40, 0, 5)
+    close.Text = "×"
+    close.TextColor3 = Color3.new(1, 1, 1)
+    close.BackgroundTransparency = 1
+    close.TextSize = 24
+    close.MouseButton1Click:Connect(function() self.Gui:Destroy() end)
+
+    return self
+end
+
+-- 创建页面 
+function XU:CreateTab(name)
+    local page = Instance.new("ScrollingFrame", self.Content)
+    page.Size = UDim2.new(1, 0, 1, 0)
+    page.BackgroundTransparency = 1
+    page.Visible = false
+    page.ScrollBarThickness = 0
+    page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    Instance.new("UIListLayout", page).Padding = UDim.new(0, 8)
+
+    local btn = Instance.new("TextButton", self.Sidebar)
+    btn.Size = UDim2.new(1, 0, 0, 40)
+    btn.BackgroundColor3 = XU_Theme.Sidebar
+    btn.Text = name
+    btn.TextColor3 = XU_Theme.Text
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 13
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+
+    btn.MouseButton1Click:Connect(function()
+        for _, v in pairs(self.Content:GetChildren()) do v.Visible = false end
+        for _, v in pairs(self.Sidebar:GetChildren()) do
+            if v:IsA("TextButton") then v.BackgroundColor3 = XU_Theme.Sidebar end
+        end
+        page.Visible = true
+        btn.BackgroundColor3 = XU_Theme.ButtonHover
+        
+        -- 点击时边框爆发特效
+        local info = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        self.MainStroke.Thickness = 5
+        TweenService:Create(self.MainStroke, info, {Thickness = 2.5}):Play()
+    end)
+
+    -- 默认激活首个页面
+    if #self.Sidebar:GetChildren() == 2 then 
+        page.Visible = true
+        btn.BackgroundColor3 = XU_Theme.ButtonHover
+    end
+
+    -- 返回页面对象以便添加组件
+    local TabMethods = {}
+    function TabMethods:AddButton(text, callback)
+        local b = Instance.new("TextButton", page)
+        b.Size = UDim2.new(0.98, 0, 0, 38)
+        b.BackgroundColor3 = XU_Theme.Secondary
+        b.Text = text
+        b.TextColor3 = Color3.new(1, 1, 1)
+        b.Font = Enum.Font.GothamSemibold
+        b.TextSize = 14
+        Instance.new("UICorner", b).CornerRadius = UDim.new(0, 5)
+        b.MouseButton1Click:Connect(callback)
+    end
+    
+    return TabMethods
+end
+
+-- 拖拽
+function XU:EnableDrag(bar, frame)
+    local drag, startPos, mouseStart
+    bar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            drag = true
+            mouseStart = input.Position
+            startPos = frame.Position
+        end
+    end)
+    UIS.InputChanged:Connect(function(input)
+        if drag and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - mouseStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    UIS.InputEnded:Connect(function() drag = false end)
+end
+
+return XU
