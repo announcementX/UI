@@ -1,7 +1,7 @@
 --[[
-    XU Advanced UI Library
+    XU Premium UI Library (Icon-Drawn Version)
     Color Palette: Cyberpunk Dark Purple & Charcoal
-    Features: Scrollable Sidebar, Smooth Animations, Mobile Draggable Float Button, Draggable Header
+    Features: Vector Drawn Icons, Advanced Image Protocol, Fixed Layout
 --]]
 
 local XU = {}
@@ -9,12 +9,11 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 
--- 销毁旧的 UI 防止重复加载
 if CoreGui:FindFirstChild("XU_UiBase") then
     CoreGui["XU_UiBase"]:Destroy()
 end
 
--- 简易拖拽函数 (完美兼容PC与手机触摸)
+-- 兼容手机端的拖拽函数
 local function MakeDraggable(gui, handle)
     handle = handle or gui
     local dragging, dragInput, dragStart, startPos
@@ -58,12 +57,12 @@ function XU:CreateWindow(titleText)
     ScreenGui.Parent = CoreGui
     ScreenGui.ResetOnSpawn = false
 
-    -- 1. 缩小后的悬浮按钮 (初始隐藏)
+    -- 1. 缩小后的圆角正方形悬浮按钮 (使用最新 rbxthumb 协议调用)
     local FloatBtn = Instance.new("ImageButton")
     FloatBtn.Name = "FloatBtn"
     FloatBtn.Size = UDim2.new(0, 55, 0, 55)
     FloatBtn.Position = UDim2.new(0.5, -27, 0.4, -27)
-    FloatBtn.Image = "rbxassetid://106649176674330" -- 你提供的图片ID
+    FloatBtn.Image = "rbxthumb://type=Asset&id=106649176674330&w=150&h=150" -- 新调用方式
     FloatBtn.BackgroundColor3 = Color3.fromRGB(20, 18, 24)
     FloatBtn.BorderSizePixel = 0
     FloatBtn.Visible = false
@@ -71,7 +70,7 @@ function XU:CreateWindow(titleText)
     FloatBtn.Parent = ScreenGui
 
     local FloatCorner = Instance.new("UICorner")
-    FloatCorner.CornerRadius = UDim.new(0, 12) -- 带圆角的正方形
+    FloatCorner.CornerRadius = UDim.new(0, 12)
     FloatCorner.Parent = FloatBtn
 
     local FloatStroke = Instance.new("UIStroke")
@@ -79,14 +78,14 @@ function XU:CreateWindow(titleText)
     FloatStroke.Thickness = 1.5
     FloatStroke.Parent = FloatBtn
 
-    MakeDraggable(FloatBtn) -- 悬浮球也支持自由拖拽
+    MakeDraggable(FloatBtn)
 
-    -- 2. 主框架 (调整宽高度以完美适配侧边栏 + 内容区)
+    -- 2. 主框架
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 480, 0, 300)
     MainFrame.Position = UDim2.new(0.5, -240, 0.4, -150)
-    MainFrame.BackgroundColor3 = Color3.fromRGB(15, 13, 18) -- 深暗底色
+    MainFrame.BackgroundColor3 = Color3.fromRGB(15, 13, 18)
     MainFrame.BorderSizePixel = 0
     MainFrame.Active = true
     MainFrame.ClipsDescendants = true
@@ -97,7 +96,7 @@ function XU:CreateWindow(titleText)
     MainCorner.Parent = MainFrame
 
     local MainStroke = Instance.new("UIStroke")
-    MainStroke.Color = Color3.fromRGB(115, 60, 195) -- 经典霓虹紫
+    MainStroke.Color = Color3.fromRGB(115, 60, 195)
     MainStroke.Thickness = 1.5
     MainStroke.Parent = MainFrame
 
@@ -131,12 +130,12 @@ function XU:CreateWindow(titleText)
     TitleLabel.BackgroundTransparency = 1
     TitleLabel.Parent = TitleBar
 
-    MakeDraggable(MainFrame, TitleBar) -- 只能拖拽顶部栏移动
+    MakeDraggable(MainFrame, TitleBar)
 
-    -- 按钮区域容器 (存放关闭和缩小)
+    -- 右上角控制按钮区域
     local ButtonHolder = Instance.new("Frame")
-    ButtonHolder.Size = UDim2.new(0, 70, 1, 0)
-    ButtonHolder.Position = UDim2.new(1, -75, 0, 0)
+    ButtonHolder.Size = UDim2.new(0, 80, 1, 0)
+    ButtonHolder.Position = UDim2.new(1, -85, 0, 0)
     ButtonHolder.BackgroundTransparency = 1
     ButtonHolder.Parent = TitleBar
 
@@ -144,30 +143,49 @@ function XU:CreateWindow(titleText)
     ButtonLayout.FillDirection = Enum.FillDirection.Horizontal
     ButtonLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
     ButtonLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-    ButtonLayout.Padding = UDim.new(0, 8)
+    ButtonLayout.Padding = UDim.new(0, 12)
     ButtonLayout.Parent = ButtonHolder
 
-    -- 关闭按钮 (×)
-    local CloseBtn = Instance.new("TextButton")
-    CloseBtn.Size = UDim2.new(0, 24, 0, 24)
-    CloseBtn.Text = "×"
-    CloseBtn.TextColor3 = Color3.fromRGB(220, 80, 80)
-    CloseBtn.TextSize = 20
-    CloseBtn.Font = Enum.Font.Gotham
-    CloseBtn.BackgroundTransparency = 1
-    CloseBtn.Parent = ButtonHolder
-
-    -- 缩小按钮 (-)
+    -- 【左侧：缩小按钮】纯代码绘制一条精致横线
     local MinimizeBtn = Instance.new("TextButton")
-    MinimizeBtn.Size = UDim2.new(0, 24, 0, 24)
-    MinimizeBtn.Text = "—"
-    MinimizeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-    MinimizeBtn.TextSize = 12
-    MinimizeBtn.Font = Enum.Font.GothamBold
+    MinimizeBtn.Name = "MinimizeBtn"
+    MinimizeBtn.Size = UDim2.new(0, 22, 0, 22)
+    MinimizeBtn.Text = ""
     MinimizeBtn.BackgroundTransparency = 1
     MinimizeBtn.Parent = ButtonHolder
 
-    -- 3. 动画逻辑
+    local MinLine = Instance.new("Frame")
+    MinLine.Size = UDim2.new(0, 12, 0, 2)
+    MinLine.Position = UDim2.new(0.5, -6, 0.5, -1)
+    MinLine.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+    MinLine.BorderSizePixel = 0
+    MinLine.Parent = MinimizeBtn
+
+    -- 【右侧：关闭按钮】纯代码两条线交叉旋转45度组合成 X
+    local CloseBtn = Instance.new("TextButton")
+    CloseBtn.Name = "CloseBtn"
+    CloseBtn.Size = UDim2.new(0, 22, 0, 22)
+    CloseBtn.Text = ""
+    CloseBtn.BackgroundTransparency = 1
+    CloseBtn.Parent = ButtonHolder
+
+    local Cross1 = Instance.new("Frame")
+    Cross1.Size = UDim2.new(0, 14, 0, 2)
+    Cross1.Position = UDim2.new(0.5, -7, 0.5, -1)
+    Cross1.BackgroundColor3 = Color3.fromRGB(230, 90, 90)
+    Cross1.Rotation = 45
+    Cross1.BorderSizePixel = 0
+    Cross1.Parent = CloseBtn
+
+    local Cross2 = Instance.new("Frame")
+    Cross2.Size = UDim2.new(0, 14, 0, 2)
+    Cross2.Position = UDim2.new(0.5, -7, 0.5, -1)
+    Cross2.BackgroundColor3 = Color3.fromRGB(230, 90, 90)
+    Cross2.Rotation = -45
+    Cross2.BorderSizePixel = 0
+    Cross2.Parent = CloseBtn
+
+    -- 动画状态锁
     local isAnimating = false
     local originalSize = MainFrame.Size
 
@@ -176,13 +194,11 @@ function XU:CreateWindow(titleText)
         if isAnimating then return end
         isAnimating = true
         
-        -- 记录当前坐标，使悬浮球出现在正中心
         FloatBtn.Position = UDim2.new(
             MainFrame.Position.X.Scale, MainFrame.Position.X.Offset + (MainFrame.Size.X.Offset/2) - 27,
             MainFrame.Position.Y.Scale, MainFrame.Position.Y.Offset + (MainFrame.Size.Y.Offset/2) - 27
         )
 
-        -- 缩小主窗口
         local shrink = TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
             Size = UDim2.new(0, 0, 0, 0),
             Position = UDim2.new(MainFrame.Position.X.Scale, MainFrame.Position.X.Offset + (MainFrame.Size.X.Offset/2), MainFrame.Position.Y.Scale, MainFrame.Position.Y.Offset + (MainFrame.Size.Y.Offset/2))
@@ -194,7 +210,6 @@ function XU:CreateWindow(titleText)
             FloatBtn.Visible = true
             FloatBtn.Size = UDim2.new(0, 0, 0, 0)
             
-            -- 弹出悬浮球
             local pop = TweenService:Create(FloatBtn, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
                 Size = UDim2.new(0, 55, 0, 55)
             })
@@ -210,7 +225,6 @@ function XU:CreateWindow(titleText)
         if isAnimating then return end
         isAnimating = true
 
-        -- 缩小悬浮球
         local shrinkFloat = TweenService:Create(FloatBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
             Size = UDim2.new(0, 0, 0, 0)
         })
@@ -220,7 +234,6 @@ function XU:CreateWindow(titleText)
             FloatBtn.Visible = false
             MainFrame.Visible = true
             
-            -- 恢复主界面大小与位置
             local targetPos = UDim2.new(
                 FloatBtn.Position.X.Scale, FloatBtn.Position.X.Offset - (originalSize.X.Offset/2) + 27,
                 FloatBtn.Position.Y.Scale, FloatBtn.Position.Y.Offset - (originalSize.Y.Offset/2) + 27
@@ -252,12 +265,12 @@ function XU:CreateWindow(titleText)
         end)
     end)
 
-    -- 4. 侧边栏结构 (Sidebar)
+    -- 3. 侧边栏结构 (Sidebar)
     local Sidebar = Instance.new("ScrollingFrame")
     Sidebar.Name = "Sidebar"
     Sidebar.Size = UDim2.new(0, 120, 1, -35)
     Sidebar.Position = UDim2.new(0, 0, 0, 35)
-    Sidebar.BackgroundColor3 = Color3.fromRGB(20, 16, 25) -- 略带紫色的偏暗深灰
+    Sidebar.BackgroundColor3 = Color3.fromRGB(20, 16, 25)
     Sidebar.BorderSizePixel = 0
     Sidebar.ScrollBarThickness = 2
     Sidebar.ScrollBarImageColor3 = Color3.fromRGB(115, 60, 195)
@@ -275,12 +288,11 @@ function XU:CreateWindow(titleText)
     SidebarPadding.PaddingRight = UDim.new(0, 6)
     SidebarPadding.Parent = Sidebar
 
-    -- 自动调整侧边栏滑动高度
     SidebarLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         Sidebar.CanvasSize = UDim2.new(0, 0, 0, SidebarLayout.AbsoluteContentSize.Y + 16)
     end)
 
-    -- 5. 右侧内容区域载体
+    -- 4. 右侧内容区域载体
     local ContentHolder = Instance.new("Frame")
     ContentHolder.Name = "ContentHolder"
     ContentHolder.Size = UDim2.new(1, -120, 1, -35)
@@ -288,17 +300,14 @@ function XU:CreateWindow(titleText)
     ContentHolder.BackgroundTransparency = 1
     ContentHolder.Parent = MainFrame
 
-    -- 核心模块对象
     local Elements = {}
     local tabs = {}
     local pages = {}
     local currentTab = nil
 
-    -- 创建 Tab 页面方法
     function Elements:CreateTab(tabName)
         local pageId = #tabs + 1
 
-        -- 侧边栏 Tab 切换按钮
         local TabBtn = Instance.new("TextButton")
         TabBtn.Name = tabName.."_Btn"
         TabBtn.Size = UDim2.new(1, 0, 0, 32)
@@ -314,13 +323,12 @@ function XU:CreateWindow(titleText)
         local TabText = Instance.new("TextLabel")
         TabText.Size = UDim2.new(1, 0, 1, 0)
         TabText.Text = tabName
-        TabText.TextColor3 = Color3.fromRGB(160, 150, 175) -- 默认未选中灰色
+        TabText.TextColor3 = Color3.fromRGB(160, 150, 175)
         TabText.Font = Enum.Font.GothamMedium
         TabText.TextSize = 12
         TabText.BackgroundTransparency = 1
         TabText.Parent = TabBtn
 
-        -- 对应的右侧可滑动页面 (ScrollingFrame)
         local PageFrame = Instance.new("ScrollingFrame")
         PageFrame.Name = tabName.."_Page"
         PageFrame.Size = UDim2.new(1, -16, 1, -10)
@@ -338,23 +346,18 @@ function XU:CreateWindow(titleText)
         PageLayout.SortOrder = Enum.SortOrder.LayoutOrder
         PageLayout.Parent = PageFrame
 
-        -- 页面高度自动调节
         PageLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
             PageFrame.CanvasSize = UDim2.new(0, 0, 0, PageLayout.AbsoluteContentSize.Y + 15)
         end)
 
-        -- 切换 Tab 的高亮与显示逻辑
         local function selectTab()
             if currentTab == pageId then return end
-            
-            -- 重置之前选中的 Tab 样式
             if currentTab and tabs[currentTab] then
                 TweenService:Create(tabs[currentTab].Btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(30, 24, 38)}):Play()
                 TweenService:Create(tabs[currentTab].Text, TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(160, 150, 175)}):Play()
                 pages[currentTab].Visible = false
             end
 
-            -- 高亮当前 Tab 样式
             currentTab = pageId
             TweenService:Create(TabBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(115, 60, 195)}):Play()
             TweenService:Create(TabText, TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
@@ -363,19 +366,15 @@ function XU:CreateWindow(titleText)
 
         TabBtn.MouseButton1Click:Connect(selectTab)
 
-        -- 缓存对象
         tabs[pageId] = {Btn = TabBtn, Text = TabText}
         pages[pageId] = PageFrame
 
-        -- 默认自动选中第一个 Tab
         if pageId == 1 then
             task.spawn(selectTab)
         end
 
-        -- 单个页面下的具体控件生成器
         local PageControls = {}
 
-        -- 1. 创建按钮
         function PageControls:CreateButton(text, callback)
             callback = callback or function() end
 
@@ -407,7 +406,6 @@ function XU:CreateWindow(titleText)
             end)
         end
 
-        -- 2. 创建开关
         function PageControls:CreateToggle(text, default, callback)
             default = default or false
             callback = callback or function() end
