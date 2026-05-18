@@ -1,17 +1,14 @@
 --[[
-    XU Premium UI Library (Fixed Layout Version)
+    XU Premium UI Library (Ultra-Thin Icons & Fixed Layout)
     Color Palette: Cyberpunk Dark Purple & Charcoal
+    Features: 1px Vector Icons, Draggable Main Frame & Float Button, Multi-Tab Pages
 --]]
 
 local XU = {}
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
-
-if CoreGui:FindFirstChild("XU_UiBase") then
-    CoreGui["XU_UiBase"]:Destroy()
-end
-
+-- 移动端/PC端通用拖拽函数
 local function MakeDraggable(gui, handle)
     handle = handle or gui
     local dragging, dragInput, dragStart, startPos
@@ -55,6 +52,7 @@ function XU:CreateWindow(titleText)
     ScreenGui.Parent = CoreGui
     ScreenGui.ResetOnSpawn = false
 
+    -- 1. 缩小后的圆角正方形悬浮按钮 (rbxthumb 快速加载流协议)
     local FloatBtn = Instance.new("ImageButton")
     FloatBtn.Name = "FloatBtn"
     FloatBtn.Size = UDim2.new(0, 55, 0, 55)
@@ -77,6 +75,7 @@ function XU:CreateWindow(titleText)
 
     MakeDraggable(FloatBtn)
 
+    -- 2. 主框架
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 480, 0, 300)
@@ -96,6 +95,7 @@ function XU:CreateWindow(titleText)
     MainStroke.Thickness = 1.5
     MainStroke.Parent = MainFrame
 
+    -- 顶部栏
     local TitleBar = Instance.new("Frame")
     TitleBar.Name = "TitleBar"
     TitleBar.Size = UDim2.new(1, 0, 0, 35)
@@ -127,7 +127,7 @@ function XU:CreateWindow(titleText)
 
     MakeDraggable(MainFrame, TitleBar)
 
-    -- 【绝对定位控制区】
+    -- 【绝对定位控制区】完美解决位置反转、过粗过亮问题
     local ButtonHolder = Instance.new("Frame")
     ButtonHolder.Name = "ButtonHolder"
     ButtonHolder.Size = UDim2.new(0, 80, 1, 0)
@@ -135,21 +135,23 @@ function XU:CreateWindow(titleText)
     ButtonHolder.BackgroundTransparency = 1
     ButtonHolder.Parent = TitleBar
 
+    -- 【左边】缩小按钮 (—) -> 超细低调横线
     local MinimizeBtn = Instance.new("TextButton")
     MinimizeBtn.Name = "MinimizeBtn"
     MinimizeBtn.Size = UDim2.new(0, 24, 0, 24)
-    MinimizeBtn.Position = UDim2.new(0, 10, 0.5, -12)
+    MinimizeBtn.Position = UDim2.new(0, 15, 0.5, -12)
     MinimizeBtn.Text = ""
     MinimizeBtn.BackgroundTransparency = 1
     MinimizeBtn.Parent = ButtonHolder
 
     local MinLine = Instance.new("Frame")
-    MinLine.Size = UDim2.new(0, 14, 0, 2)
-    MinLine.Position = UDim2.new(0.5, -7, 0.5, -1)
-    MinLine.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+    MinLine.Size = UDim2.new(0, 10, 0, 1) -- 1像素厚，内敛精致
+    MinLine.Position = UDim2.new(0.5, -5, 0.5, 0)
+    MinLine.BackgroundColor3 = Color3.fromRGB(150, 140, 165) -- 采用淡灰紫隐蔽色
     MinLine.BorderSizePixel = 0
     MinLine.Parent = MinimizeBtn
 
+    -- 【右边】关闭按钮 (×) -> 超细低调交叉线
     local CloseBtn = Instance.new("TextButton")
     CloseBtn.Name = "CloseBtn"
     CloseBtn.Size = UDim2.new(0, 24, 0, 24)
@@ -159,24 +161,26 @@ function XU:CreateWindow(titleText)
     CloseBtn.Parent = ButtonHolder
 
     local Cross1 = Instance.new("Frame")
-    Cross1.Size = UDim2.new(0, 14, 0, 2)
-    Cross1.Position = UDim2.new(0.5, -7, 0.5, -1)
-    Cross1.BackgroundColor3 = Color3.fromRGB(230, 90, 90)
+    Cross1.Size = UDim2.new(0, 11, 0, 1) -- 1像素厚度
+    Cross1.Position = UDim2.new(0.5, -5.5, 0.5, 0)
+    Cross1.BackgroundColor3 = Color3.fromRGB(150, 140, 165) -- 告别突兀的红色，颜色完美统一
     Cross1.Rotation = 45
     Cross1.BorderSizePixel = 0
     Cross1.Parent = CloseBtn
 
     local Cross2 = Instance.new("Frame")
-    Cross2.Size = UDim2.new(0, 14, 0, 2)
-    Cross2.Position = UDim2.new(0.5, -7, 0.5, -1)
-    Cross2.BackgroundColor3 = Color3.fromRGB(230, 90, 90)
+    Cross2.Size = UDim2.new(0, 11, 0, 1) -- 1像素厚度
+    Cross2.Position = UDim2.new(0.5, -5.5, 0.5, 0)
+    Cross2.BackgroundColor3 = Color3.fromRGB(150, 140, 165)
     Cross2.Rotation = -45
     Cross2.BorderSizePixel = 0
     Cross2.Parent = CloseBtn
 
+    -- 核心过渡动画逻辑
     local isAnimating = false
     local originalSize = MainFrame.Size
 
+    -- 缩小回弹动画
     MinimizeBtn.MouseButton1Click:Connect(function()
         if isAnimating then return end
         isAnimating = true
@@ -207,6 +211,7 @@ function XU:CreateWindow(titleText)
         end)
     end)
 
+    -- 点击悬浮球展开动画
     FloatBtn.MouseButton1Click:Connect(function()
         if isAnimating then return end
         isAnimating = true
@@ -236,6 +241,7 @@ function XU:CreateWindow(titleText)
         end)
     end)
 
+    -- 关闭主框架淡出
     CloseBtn.MouseButton1Click:Connect(function()
         if isAnimating then return end
         isAnimating = true
@@ -250,6 +256,7 @@ function XU:CreateWindow(titleText)
         end)
     end)
 
+    -- 3. 侧边栏结构 (Sidebar - 支持滑动)
     local Sidebar = Instance.new("ScrollingFrame")
     Sidebar.Name = "Sidebar"
     Sidebar.Size = UDim2.new(0, 120, 1, -35)
@@ -276,6 +283,7 @@ function XU:CreateWindow(titleText)
         Sidebar.CanvasSize = UDim2.new(0, 0, 0, SidebarLayout.AbsoluteContentSize.Y + 16)
     end)
 
+    -- 4. 右侧主页面视图承载体
     local ContentHolder = Instance.new("Frame")
     ContentHolder.Name = "ContentHolder"
     ContentHolder.Size = UDim2.new(1, -120, 1, -35)
@@ -288,6 +296,7 @@ function XU:CreateWindow(titleText)
     local pages = {}
     local currentTab = nil
 
+    -- 多页面(Tab)创建逻辑
     function Elements:CreateTab(tabName)
         local pageId = #tabs + 1
 
@@ -312,6 +321,7 @@ function XU:CreateWindow(titleText)
         TabText.BackgroundTransparency = 1
         TabText.Parent = TabBtn
 
+        -- 主页面滚动面板
         local PageFrame = Instance.new("ScrollingFrame")
         PageFrame.Name = tabName.."_Page"
         PageFrame.Size = UDim2.new(1, -16, 1, -10)
@@ -329,10 +339,12 @@ function XU:CreateWindow(titleText)
         PageLayout.SortOrder = Enum.SortOrder.LayoutOrder
         PageLayout.Parent = PageFrame
 
+        -- 页面高度自适应调节
         PageLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
             PageFrame.CanvasSize = UDim2.new(0, 0, 0, PageLayout.AbsoluteContentSize.Y + 15)
         end)
 
+        -- 选项卡切换淡入切换高亮
         local function selectTab()
             if currentTab == pageId then return end
             if currentTab and tabs[currentTab] then
@@ -358,6 +370,7 @@ function XU:CreateWindow(titleText)
 
         local PageControls = {}
 
+        -- 创建按键
         function PageControls:CreateButton(text, callback)
             callback = callback or function() end
 
@@ -389,6 +402,7 @@ function XU:CreateWindow(titleText)
             end)
         end
 
+        -- 创建开关
         function PageControls:CreateToggle(text, default, callback)
             default = default or false
             callback = callback or function() end
