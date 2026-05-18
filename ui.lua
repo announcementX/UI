@@ -1,7 +1,6 @@
 --[[
-    XU Premium UI Library (Icon-Drawn Version)
+    XU Premium UI Library (Fixed Layout Version)
     Color Palette: Cyberpunk Dark Purple & Charcoal
-    Features: Vector Drawn Icons, Advanced Image Protocol, Fixed Layout
 --]]
 
 local XU = {}
@@ -13,7 +12,6 @@ if CoreGui:FindFirstChild("XU_UiBase") then
     CoreGui["XU_UiBase"]:Destroy()
 end
 
--- 兼容手机端的拖拽函数
 local function MakeDraggable(gui, handle)
     handle = handle or gui
     local dragging, dragInput, dragStart, startPos
@@ -57,12 +55,11 @@ function XU:CreateWindow(titleText)
     ScreenGui.Parent = CoreGui
     ScreenGui.ResetOnSpawn = false
 
-    -- 1. 缩小后的圆角正方形悬浮按钮 (使用最新 rbxthumb 协议调用)
     local FloatBtn = Instance.new("ImageButton")
     FloatBtn.Name = "FloatBtn"
     FloatBtn.Size = UDim2.new(0, 55, 0, 55)
     FloatBtn.Position = UDim2.new(0.5, -27, 0.4, -27)
-    FloatBtn.Image = "rbxthumb://type=Asset&id=106649176674330&w=150&h=150" -- 新调用方式
+    FloatBtn.Image = "rbxthumb://type=Asset&id=106649176674330&w=150&h=150"
     FloatBtn.BackgroundColor3 = Color3.fromRGB(20, 18, 24)
     FloatBtn.BorderSizePixel = 0
     FloatBtn.Visible = false
@@ -80,7 +77,6 @@ function XU:CreateWindow(titleText)
 
     MakeDraggable(FloatBtn)
 
-    -- 2. 主框架
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 480, 0, 300)
@@ -100,7 +96,6 @@ function XU:CreateWindow(titleText)
     MainStroke.Thickness = 1.5
     MainStroke.Parent = MainFrame
 
-    -- 顶部栏
     local TitleBar = Instance.new("Frame")
     TitleBar.Name = "TitleBar"
     TitleBar.Size = UDim2.new(1, 0, 0, 35)
@@ -132,39 +127,33 @@ function XU:CreateWindow(titleText)
 
     MakeDraggable(MainFrame, TitleBar)
 
-    -- 右上角控制按钮区域
+    -- 【绝对定位控制区】
     local ButtonHolder = Instance.new("Frame")
+    ButtonHolder.Name = "ButtonHolder"
     ButtonHolder.Size = UDim2.new(0, 80, 1, 0)
     ButtonHolder.Position = UDim2.new(1, -85, 0, 0)
     ButtonHolder.BackgroundTransparency = 1
     ButtonHolder.Parent = TitleBar
 
-    local ButtonLayout = Instance.new("UIListLayout")
-    ButtonLayout.FillDirection = Enum.FillDirection.Horizontal
-    ButtonLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-    ButtonLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-    ButtonLayout.Padding = UDim.new(0, 12)
-    ButtonLayout.Parent = ButtonHolder
-
-    -- 【左侧：缩小按钮】纯代码绘制一条精致横线
     local MinimizeBtn = Instance.new("TextButton")
     MinimizeBtn.Name = "MinimizeBtn"
-    MinimizeBtn.Size = UDim2.new(0, 22, 0, 22)
+    MinimizeBtn.Size = UDim2.new(0, 24, 0, 24)
+    MinimizeBtn.Position = UDim2.new(0, 10, 0.5, -12)
     MinimizeBtn.Text = ""
     MinimizeBtn.BackgroundTransparency = 1
     MinimizeBtn.Parent = ButtonHolder
 
     local MinLine = Instance.new("Frame")
-    MinLine.Size = UDim2.new(0, 12, 0, 2)
-    MinLine.Position = UDim2.new(0.5, -6, 0.5, -1)
+    MinLine.Size = UDim2.new(0, 14, 0, 2)
+    MinLine.Position = UDim2.new(0.5, -7, 0.5, -1)
     MinLine.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
     MinLine.BorderSizePixel = 0
     MinLine.Parent = MinimizeBtn
 
-    -- 【右侧：关闭按钮】纯代码两条线交叉旋转45度组合成 X
     local CloseBtn = Instance.new("TextButton")
     CloseBtn.Name = "CloseBtn"
-    CloseBtn.Size = UDim2.new(0, 22, 0, 22)
+    CloseBtn.Size = UDim2.new(0, 24, 0, 24)
+    CloseBtn.Position = UDim2.new(1, -34, 0.5, -12)
     CloseBtn.Text = ""
     CloseBtn.BackgroundTransparency = 1
     CloseBtn.Parent = ButtonHolder
@@ -185,11 +174,9 @@ function XU:CreateWindow(titleText)
     Cross2.BorderSizePixel = 0
     Cross2.Parent = CloseBtn
 
-    -- 动画状态锁
     local isAnimating = false
     local originalSize = MainFrame.Size
 
-    -- 缩小动画
     MinimizeBtn.MouseButton1Click:Connect(function()
         if isAnimating then return end
         isAnimating = true
@@ -220,7 +207,6 @@ function XU:CreateWindow(titleText)
         end)
     end)
 
-    -- 恢复动画
     FloatBtn.MouseButton1Click:Connect(function()
         if isAnimating then return end
         isAnimating = true
@@ -250,7 +236,6 @@ function XU:CreateWindow(titleText)
         end)
     end)
 
-    -- 关闭动画
     CloseBtn.MouseButton1Click:Connect(function()
         if isAnimating then return end
         isAnimating = true
@@ -265,7 +250,6 @@ function XU:CreateWindow(titleText)
         end)
     end)
 
-    -- 3. 侧边栏结构 (Sidebar)
     local Sidebar = Instance.new("ScrollingFrame")
     Sidebar.Name = "Sidebar"
     Sidebar.Size = UDim2.new(0, 120, 1, -35)
@@ -292,7 +276,6 @@ function XU:CreateWindow(titleText)
         Sidebar.CanvasSize = UDim2.new(0, 0, 0, SidebarLayout.AbsoluteContentSize.Y + 16)
     end)
 
-    -- 4. 右侧内容区域载体
     local ContentHolder = Instance.new("Frame")
     ContentHolder.Name = "ContentHolder"
     ContentHolder.Size = UDim2.new(1, -120, 1, -35)
